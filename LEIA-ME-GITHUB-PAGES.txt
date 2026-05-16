@@ -1,0 +1,35 @@
+﻿# Publicar no GitHub Pages - Escala de Sabado Terra Fertil
+
+Este pacote foi preparado para virar um link gratuito e fixo no GitHub Pages.
+
+PASSO A PASSO MAIS FACIL
+
+1. Entre em https://github.com e crie ou acesse sua conta.
+2. Clique em New repository.
+3. Nome sugerido do repositorio: escala-sabado-terra-fertil
+4. Marque como Public.
+5. Clique em Create repository.
+6. Na tela do repositorio, clique em uploading an existing file ou Add file > Upload files.
+7. Envie estes arquivos desta pasta:
+   - index.html
+   - styles.css
+   - script.js
+   - terra-fertil-logo-crop.png
+   - .nojekyll
+8. Clique em Commit changes.
+9. Va em Settings > Pages.
+10. Em Build and deployment, escolha:
+    - Source: Deploy from a branch
+    - Branch: main
+    - Folder: / root
+11. Clique em Save.
+12. Aguarde alguns minutos. O link vai aparecer na propria pagina Settings > Pages.
+
+O link final geralmente fica assim:
+https://SEU-USUARIO.github.io/escala-sabado-terra-fertil/
+
+Depois disso, e so mandar esse link para a equipe usar todo sabado.
+
+Observacao:
+- Esse formulario nao salva dados. Cada pessoa preenche e baixa o PNG.
+- Para atualizar a arte no futuro, basta reenviar os arquivos atualizados no mesmo repositorio.

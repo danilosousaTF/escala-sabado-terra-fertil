@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Gerador de Plantão de Sábado</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@600;700;800;900&family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="form-panel" aria-label="Formulario da arte">
+        <div class="brand-row">
+          <img class="brand-logo" src="terra-fertil-logo-crop.png" alt="Terra Fértil" />
+          <div>
+            <p class="eyebrow">Terra Fértil</p>
+            <h1>Plantão de Sábado</h1>
+          </div>
+        </div>
+
+        <form id="artForm">
+          <label>
+            Loja
+            <select id="store" required>
+              <option value="Limoeiro">Limoeiro</option>
+              <option value="Maracanaú">Maracanaú</option>
+              <option value="Mossoró">Mossoró</option>
+              <option value="Guaraciaba">Guaraciaba</option>
+              <option value="Barbalha">Barbalha</option>
+              <option value="Sousa">Sousa</option>
+              <option value="Baraúna">Baraúna</option>
+              <option value="Marco">Marco</option>
+              <option value="Tianguá">Tianguá</option>
+              <option value="Ceará-Mirim">Ceará-Mirim</option>
+              <option value="Iguatu">Iguatu</option>
+              <option value="Online">Online</option>
+              <option value="Outro">Outro</option>
+            </select>
+          </label>
+
+          <label id="customStoreWrap" class="hidden">
+            Nome da loja
+            <input id="customStore" type="text" placeholder="Digite a loja" />
+          </label>
+
+          <div class="sector-list" aria-label="Nomes por setor">
+            <p class="group-title">Nomes por setor</p>
+
+            <label>
+              Administrativo
+              <textarea data-sector="Administrativo" rows="2" placeholder="Um nome por linha"></textarea>
+            </label>
+
+            <label>
+              Comercial
+              <textarea data-sector="Comercial" rows="3" placeholder="Um nome por linha"></textarea>
+            </label>
+
+            <label>
+              Almoxarife
+              <textarea data-sector="Almoxarife" rows="2" placeholder="Um nome por linha"></textarea>
+            </label>
+
+            <label>
+              Motorista
+              <textarea data-sector="Motorista" rows="2" placeholder="Um nome por linha"></textarea>
+            </label>
+
+            <label>
+              Estoque
+              <textarea data-sector="Estoque" rows="2" placeholder="Um nome por linha"></textarea>
+            </label>
+
+            <label>
+              Campo
+              <textarea data-sector="Campo" rows="2" placeholder="Um nome por linha"></textarea>
+            </label>
+
+            <div class="other-sector">
+              <label>
+                Outro setor
+                <input id="customDepartment" type="text" placeholder="Nome do setor" />
+              </label>
+
+              <label>
+                Nomes do outro setor
+                <textarea data-sector="Outro" rows="2" placeholder="Um nome por linha"></textarea>
+              </label>
+            </div>
+          </div>
+
+          <label>
+            Data do sábado
+            <input id="shiftDate" type="date" required />
+          </label>
+
+          <label>
+            Mensagem curta
+            <input id="note" type="text" maxlength="64" value="Atendimento conforme escala" />
+          </label>
+
+          <div class="button-row">
+            <button type="button" id="downloadBtn">Baixar PNG</button>
+            <button type="button" id="clearBtn" class="secondary">Limpar</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="preview-panel" aria-label="Previa da imagem">
+        <canvas id="artCanvas" width="1080" height="1350"></canvas>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>
