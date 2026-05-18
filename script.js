@@ -17,18 +17,17 @@ const brandLogo = new Image();
 brandLogo.src = "terra-fertil-logo-crop.png";
 
 const colors = {
-  ink: "#151e29",
-  graphite: "#1c2633",
+  ink: "#151E29",
+  graphite: "#1C2633",
   muted: "#768597",
-  green: "#668d3c",
-  vivid: "#a5cd39",
-  lime: "#c8db3d",
-  gold: "#ffac14",
-  orange: "#ff7212",
-  cream: "#f8faf2",
-  white: "#ffffff",
-  pale: "#f3f9ee",
-  border: "#dbe7cf",
+  green: "#668D3C",
+  vivid: "#A5CD39",
+  lime: "#C8DB3D",
+  orange: "#FF7212",
+  paper: "#F7FAF1",
+  pale: "#F3F9EE",
+  white: "#FFFFFF",
+  border: "#DCE8D2",
 };
 
 function nextSaturday(date = new Date()) {
@@ -43,7 +42,17 @@ function toInputDate(date) {
   return date.toISOString().slice(0, 10);
 }
 
-function formatDate(value) {
+function formatShortDate(value) {
+  if (!value) return "{{DATA}}";
+  const [year, month, day] = value.split("-").map(Number);
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(new Date(year, month - 1, day));
+}
+
+function formatFullDate(value) {
   if (!value) return "";
   const [year, month, day] = value.split("-").map(Number);
   return new Intl.DateTimeFormat("pt-BR", {
@@ -72,7 +81,7 @@ function getSectorGroups() {
   return form.sectorInputs
     .map((input) => {
       const baseName = input.dataset.sector;
-      const sector = baseName === "Outro" ? form.customDepartment.value.trim() || "Outro" : baseName;
+      const sector = baseName === "Outro" ? form.customDepartment.value.trim() || "Outros" : baseName;
       return {
         sector,
         names: cleanNames(input.value),
@@ -95,23 +104,32 @@ function drawRoundRect(x, y, width, height, radius) {
   ctx.closePath();
 }
 
-function drawSoftShadow(x, y, width, height, radius, alpha = 0.12) {
+function fillRoundRect(x, y, width, height, radius, fill, stroke = null, lineWidth = 1) {
+  drawRoundRect(x, y, width, height, radius);
+  ctx.fillStyle = fill;
+  ctx.fill();
+  if (stroke) {
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = lineWidth;
+    ctx.stroke();
+  }
+}
+
+function drawShadow(x, y, width, height, radius, alpha = 0.08) {
   ctx.save();
   ctx.shadowColor = `rgba(21, 30, 41, ${alpha})`;
   ctx.shadowBlur = 22;
   ctx.shadowOffsetY = 10;
-  ctx.fillStyle = colors.white;
-  drawRoundRect(x, y, width, height, radius);
-  ctx.fill();
+  fillRoundRect(x, y, width, height, radius, colors.white);
   ctx.restore();
 }
 
-function fitText(text, maxWidth, startSize, minSize, weight = 800) {
+function fitText(text, maxWidth, startSize, minSize, weight = 800, family = "Exo 2") {
   let size = startSize;
   do {
-    ctx.font = `${weight} ${size}px "Exo 2", Arial, Helvetica, sans-serif`;
+    ctx.font = `${weight} ${size}px "${family}", Arial, Helvetica, sans-serif`;
     if (ctx.measureText(text).width <= maxWidth) return size;
-    size -= 2;
+    size -= 1;
   } while (size >= minSize);
   return minSize;
 }
@@ -136,364 +154,6 @@ function wrapText(text, maxWidth, font) {
   return lines;
 }
 
-function drawBackground() {
-  ctx.fillStyle = "#f7faef";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  const glow = ctx.createRadialGradient(820, 190, 60, 820, 190, 620);
-  glow.addColorStop(0, "rgba(200,219,61,0.22)");
-  glow.addColorStop(1, "rgba(200,219,61,0)");
-  ctx.fillStyle = glow;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  const masthead = ctx.createLinearGradient(0, 0, canvas.width, 260);
-  masthead.addColorStop(0, colors.ink);
-  masthead.addColorStop(0.68, colors.graphite);
-  masthead.addColorStop(1, "#24354a");
-  ctx.fillStyle = masthead;
-  ctx.fillRect(0, 0, canvas.width, 300);
-
-  ctx.fillStyle = colors.lime;
-  ctx.fillRect(0, 0, canvas.width, 12);
-  ctx.fillStyle = colors.orange;
-  ctx.fillRect(0, 12, canvas.width, 5);
-
-  ctx.globalAlpha = 0.12;
-  ctx.fillStyle = colors.lime;
-  ctx.beginPath();
-  ctx.moveTo(715, 0);
-  ctx.bezierCurveTo(905, 74, 1004, 168, 1080, 286);
-  ctx.lineTo(1080, 0);
-  ctx.closePath();
-  ctx.fill();
-
-  ctx.globalAlpha = 0.09;
-  drawSimpleLeaf(958, 164, 2.15);
-  drawSimpleLeaf(126, canvas.height - 105, 1.8);
-  ctx.globalAlpha = 1;
-}
-
-function drawSimpleLeaf(cx, cy, scale = 1, opacity = 1) {
-  ctx.save();
-  ctx.translate(cx, cy);
-  ctx.scale(scale, scale);
-  ctx.globalAlpha = opacity;
-  ctx.fillStyle = colors.green;
-  ctx.beginPath();
-  ctx.moveTo(0, 18);
-  ctx.bezierCurveTo(-28, -18, -8, -44, 28, -58);
-  ctx.bezierCurveTo(30, -20, 18, 8, 0, 18);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.moveTo(-10, 20);
-  ctx.bezierCurveTo(-42, 0, -42, -28, -16, -46);
-  ctx.bezierCurveTo(-12, -18, -5, 2, -10, 20);
-  ctx.fill();
-  ctx.restore();
-}
-
-function drawPeopleIcon(cx, cy, radius) {
-  const iconGradient = ctx.createLinearGradient(cx - radius, cy - radius, cx + radius, cy + radius);
-  iconGradient.addColorStop(0, colors.lime);
-  iconGradient.addColorStop(1, "#3f8428");
-  ctx.fillStyle = iconGradient;
-  ctx.beginPath();
-  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.strokeStyle = colors.white;
-  ctx.lineWidth = 5;
-  ctx.lineCap = "round";
-  ctx.beginPath();
-  ctx.arc(cx, cy - 13, 17, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.arc(cx - 31, cy - 3, 11, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.arc(cx + 31, cy - 3, 11, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(cx - 38, cy + 34);
-  ctx.quadraticCurveTo(cx, cy + 8, cx + 38, cy + 34);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(cx - 61, cy + 30);
-  ctx.quadraticCurveTo(cx - 34, cy + 12, cx - 17, cy + 30);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(cx + 17, cy + 30);
-  ctx.quadraticCurveTo(cx + 34, cy + 12, cx + 61, cy + 30);
-  ctx.stroke();
-}
-
-function drawStoreIcon(cx, cy) {
-  ctx.strokeStyle = colors.ink;
-  ctx.lineWidth = 4;
-  ctx.lineJoin = "round";
-  ctx.strokeRect(cx - 29, cy - 14, 58, 42);
-  ctx.strokeRect(cx - 9, cy + 4, 18, 24);
-  ctx.beginPath();
-  ctx.moveTo(cx - 34, cy - 14);
-  ctx.lineTo(cx - 26, cy - 40);
-  ctx.lineTo(cx + 26, cy - 40);
-  ctx.lineTo(cx + 34, cy - 14);
-  ctx.stroke();
-  for (let i = -2; i <= 2; i++) {
-    ctx.beginPath();
-    ctx.moveTo(cx + i * 14, cy - 40);
-    ctx.lineTo(cx + i * 12, cy - 14);
-    ctx.stroke();
-  }
-}
-
-function drawCalendarIcon(cx, cy) {
-  ctx.strokeStyle = colors.ink;
-  ctx.lineWidth = 4;
-  ctx.lineJoin = "round";
-  ctx.strokeRect(cx - 30, cy - 34, 60, 62);
-  ctx.beginPath();
-  ctx.moveTo(cx - 30, cy - 14);
-  ctx.lineTo(cx + 30, cy - 14);
-  ctx.moveTo(cx - 16, cy - 42);
-  ctx.lineTo(cx - 16, cy - 26);
-  ctx.moveTo(cx + 16, cy - 42);
-  ctx.lineTo(cx + 16, cy - 26);
-  ctx.stroke();
-  ctx.fillStyle = colors.ink;
-  [-15, 0, 15].forEach((x) => {
-    [1, 17].forEach((y) => {
-      ctx.fillRect(cx + x - 3, cy + y - 3, 6, 6);
-    });
-  });
-}
-
-function drawHeader(store, date, note) {
-  if (brandLogo.complete && brandLogo.naturalWidth) {
-    ctx.fillStyle = colors.white;
-    drawRoundRect(64, 56, 220, 116, 8);
-    ctx.fill();
-    const logoWidth = 176;
-    const logoHeight = logoWidth * (brandLogo.naturalHeight / brandLogo.naturalWidth);
-    ctx.drawImage(brandLogo, 86, 68, logoWidth, logoHeight);
-  }
-
-  ctx.fillStyle = colors.white;
-  ctx.font = "900 64px 'Exo 2', Arial, Helvetica, sans-serif";
-  ctx.fillText("Plantão de Sábado", 320, 104);
-  ctx.font = "600 26px 'Inter', Arial, Helvetica, sans-serif";
-  ctx.fillStyle = "rgba(255,255,255,0.78)";
-  ctx.fillText("Escala semanal da equipe Terra Fértil", 322, 146);
-
-  ctx.fillStyle = "rgba(200,219,61,0.14)";
-  drawRoundRect(322, 174, 276, 42, 21);
-  ctx.fill();
-  ctx.fillStyle = colors.lime;
-  ctx.font = "800 20px 'Inter', Arial, Helvetica, sans-serif";
-  ctx.fillText("COMUNICADO INTERNO", 344, 202);
-
-  const infoY = 238;
-  const cards = [
-    { label: "LOJA", value: store, x: 58, width: 464 },
-    { label: "DATA", value: date ? date.split("-").reverse().join("/") : "{{DATA}}", x: 558, width: 464 },
-  ];
-
-  cards.forEach((card) => {
-    drawSoftShadow(card.x, infoY, card.width, 124, 8, 0.14);
-    ctx.fillStyle = colors.white;
-    drawRoundRect(card.x, infoY, card.width, 124, 8);
-    ctx.fill();
-    ctx.strokeStyle = colors.border;
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    ctx.fillStyle = card.label === "LOJA" ? colors.green : colors.orange;
-    drawRoundRect(card.x + 26, infoY + 24, 78, 28, 14);
-    ctx.fill();
-    ctx.fillStyle = colors.white;
-    ctx.font = "900 16px 'Inter', Arial, Helvetica, sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText(card.label, card.x + 65, infoY + 44);
-    ctx.textAlign = "left";
-
-    ctx.fillStyle = colors.green;
-    if (card.label === "DATA") ctx.fillStyle = colors.ink;
-    const valueSize = fitText(card.value, card.width - 56, 38, 24, 900);
-    ctx.font = `900 ${valueSize}px "Exo 2", Arial, Helvetica, sans-serif`;
-    ctx.fillText(card.value, card.x + 28, infoY + 94);
-  });
-
-  if (note) {
-    ctx.fillStyle = colors.white;
-    drawRoundRect(58, 386, 964, 62, 8);
-    ctx.fill();
-    ctx.fillStyle = colors.orange;
-    ctx.fillRect(58, 386, 7, 62);
-    ctx.fillStyle = colors.graphite;
-    ctx.font = "700 23px 'Inter', Arial, Helvetica, sans-serif";
-    ctx.fillText(note, 88, 426);
-  }
-}
-
-function drawSectorGroup(group, x, y, width) {
-  const countLabel = `${group.names.length} ${group.names.length === 1 ? "pessoa" : "pessoas"}`;
-  const columns = group.names.length > 1 ? 2 : 1;
-  const columnGap = 22;
-  const chipWidth = columns === 2 ? (width - 64 - columnGap) / 2 : width - 64;
-  const rowHeight = 52;
-  const rows = Math.ceil(group.names.length / columns);
-  const cardHeight = 92 + rows * rowHeight + 28;
-
-  drawSoftShadow(x, y, width, cardHeight, 8, 0.08);
-  ctx.fillStyle = colors.white;
-  drawRoundRect(x, y, width, cardHeight, 8);
-  ctx.fill();
-  ctx.strokeStyle = colors.border;
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  const headerGradient = ctx.createLinearGradient(x, y, x + width, y);
-  headerGradient.addColorStop(0, colors.ink);
-  headerGradient.addColorStop(0.78, colors.graphite);
-  headerGradient.addColorStop(1, "#31455d");
-  ctx.fillStyle = headerGradient;
-  drawRoundRect(x, y, width, 72, 8);
-  ctx.fill();
-  ctx.fillStyle = colors.lime;
-  ctx.font = "900 28px 'Exo 2', Arial, Helvetica, sans-serif";
-  ctx.fillText(group.sector, x + 32, y + 46);
-  ctx.fillStyle = colors.white;
-  ctx.font = "800 22px 'Inter', Arial, Helvetica, sans-serif";
-  ctx.textAlign = "right";
-  ctx.fillText(countLabel, x + width - 32, y + 46);
-  ctx.textAlign = "left";
-
-  ctx.font = "800 25px 'Exo 2', Arial, Helvetica, sans-serif";
-  group.names.forEach((name, index) => {
-    const col = columns === 2 ? index % 2 : 0;
-    const row = columns === 2 ? Math.floor(index / 2) : index;
-    const chipX = x + 32 + col * (chipWidth + columnGap);
-    const chipY = y + 96 + row * rowHeight;
-    ctx.fillStyle = "#f7faf3";
-    drawRoundRect(chipX, chipY, chipWidth, 40, 20);
-    ctx.fill();
-    ctx.strokeStyle = "#e3ecd8";
-    ctx.lineWidth = 1;
-    ctx.stroke();
-    ctx.fillStyle = colors.lime;
-    ctx.beginPath();
-    ctx.arc(chipX + 22, chipY + 20, 12, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = colors.white;
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(chipX + 16, chipY + 20);
-    ctx.lineTo(chipX + 21, chipY + 25);
-    ctx.lineTo(chipX + 29, chipY + 14);
-    ctx.stroke();
-    ctx.fillStyle = colors.ink;
-    const size = fitText(name, chipWidth - 58, 25, 18, 800);
-    ctx.font = `800 ${size}px "Exo 2", Arial, Helvetica, sans-serif`;
-    ctx.fillText(name, chipX + 46, chipY + 28);
-  });
-
-  return cardHeight;
-}
-
-function drawMainCard(groups, store, date, note) {
-  let y = note ? 492 : 414;
-
-  ctx.fillStyle = colors.ink;
-  ctx.font = "900 32px 'Exo 2', Arial, Helvetica, sans-serif";
-  ctx.fillText("Colaboradores por setor", 58, y);
-
-  const totalNames = groups.reduce((sum, group) => sum + group.names.length, 0);
-  ctx.fillStyle = colors.green;
-  drawRoundRect(754, y - 34, 268, 46, 23);
-  ctx.fill();
-  ctx.fillStyle = colors.white;
-  ctx.font = "900 22px 'Inter', Arial, Helvetica, sans-serif";
-  ctx.textAlign = "center";
-  ctx.fillText(`${totalNames} ${totalNames === 1 ? "colaborador" : "colaboradores"}`, 888, y - 4);
-  ctx.textAlign = "left";
-  y += 34;
-
-  if (!groups.length) {
-    ctx.fillStyle = colors.white;
-    drawRoundRect(58, y, 964, 180, 8);
-    ctx.fill();
-    ctx.strokeStyle = "rgba(102,141,60,0.26)";
-    ctx.stroke();
-    ctx.fillStyle = colors.muted;
-    ctx.font = "800 30px 'Exo 2', Arial, Helvetica, sans-serif";
-    ctx.fillText("Preencha os nomes nos setores ao lado", 108, y + 98);
-    return y + 210;
-  }
-
-  groups.forEach((group) => {
-    const height = drawSectorGroup(group, 58, y, 964);
-    y += height + 22;
-  });
-
-  return y;
-}
-
-function drawFooter(y) {
-  const footerY = Math.max(y + 28, canvas.height - 160);
-  ctx.fillStyle = colors.white;
-  drawRoundRect(58, footerY, 964, 112, 8);
-  ctx.fill();
-  ctx.strokeStyle = colors.border;
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  if (brandLogo.complete && brandLogo.naturalWidth) {
-    ctx.fillStyle = "#f7faf3";
-    drawRoundRect(84, footerY + 20, 218, 72, 8);
-    ctx.fill();
-    const logoWidth = 128;
-    const logoHeight = logoWidth * (brandLogo.naturalHeight / brandLogo.naturalWidth);
-    ctx.drawImage(brandLogo, 129, footerY + 23, logoWidth, logoHeight);
-  } else {
-    ctx.fillStyle = colors.green;
-    ctx.font = "900 34px 'Exo 2', Arial, Helvetica, sans-serif";
-    ctx.fillText("Terra Fértil", 100, footerY + 66);
-  }
-
-  ctx.fillStyle = colors.ink;
-  ctx.font = "800 28px 'Exo 2', Arial, Helvetica, sans-serif";
-  ctx.fillText("Escala de sábado", 350, footerY + 48);
-  ctx.fillStyle = colors.muted;
-  ctx.font = "600 21px 'Inter', Arial, Helvetica, sans-serif";
-  ctx.fillText("Arte gerada automaticamente para manter o padrão visual", 350, footerY + 82);
-}
-
-function measureContentHeight(groups, note) {
-  let y = note ? 492 : 414;
-  y += 34;
-  if (!groups.length) return Math.max(1350, y + 210 + 220);
-
-  groups.forEach((group) => {
-    const columns = group.names.length > 1 ? 2 : 1;
-    const rows = Math.ceil(group.names.length / columns);
-    const height = 92 + rows * 52 + 28;
-    y += height + 22;
-  });
-
-  return Math.max(1350, y + 220);
-}
-
-function render() {
-  const groups = getSectorGroups();
-  const note = form.note.value.trim();
-  canvas.height = measureContentHeight(groups, note);
-
-  drawBackground();
-  drawHeader(getStore(), form.shiftDate.value, note);
-  const endY = drawMainCard(groups, getStore(), form.shiftDate.value, note);
-  drawFooter(endY);
-}
-
 function slug(value) {
   return value
     .toLowerCase()
@@ -501,6 +161,273 @@ function slug(value) {
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
+}
+
+function drawBackground() {
+  ctx.fillStyle = colors.paper;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const glow = ctx.createRadialGradient(900, 120, 60, 900, 120, 620);
+  glow.addColorStop(0, "rgba(200, 219, 61, 0.24)");
+  glow.addColorStop(1, "rgba(200, 219, 61, 0)");
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, canvas.width, 460);
+
+  ctx.fillStyle = colors.ink;
+  ctx.fillRect(0, 0, canvas.width, 14);
+  ctx.fillStyle = colors.lime;
+  ctx.fillRect(0, 14, canvas.width * 0.78, 8);
+  ctx.fillStyle = colors.orange;
+  ctx.fillRect(canvas.width * 0.78, 14, canvas.width * 0.22, 8);
+
+  ctx.globalAlpha = 0.06;
+  ctx.fillStyle = colors.green;
+  ctx.beginPath();
+  ctx.ellipse(1010, 186, 150, 250, 0.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(40, canvas.height - 130, 160, 240, -0.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+}
+
+function drawLogo(x, y, width) {
+  if (!brandLogo.complete || !brandLogo.naturalWidth) return 0;
+  const height = width * (brandLogo.naturalHeight / brandLogo.naturalWidth);
+  ctx.drawImage(brandLogo, x, y, width, height);
+  return height;
+}
+
+function drawHeader(store, date, note) {
+  const margin = 64;
+  const logoWidth = 250;
+  const logoHeight = drawLogo(margin, 66, logoWidth);
+
+  ctx.fillStyle = colors.ink;
+  ctx.font = "900 66px 'Exo 2', Arial, Helvetica, sans-serif";
+  ctx.fillText("Plantão de Sábado", 366, 116);
+
+  ctx.fillStyle = colors.graphite;
+  ctx.font = "600 28px 'Inter', Arial, Helvetica, sans-serif";
+  ctx.fillText("Escala semanal da equipe Terra Fértil", 368, 158);
+
+  fillRoundRect(368, 184, 214, 36, 18, "rgba(102, 141, 60, 0.12)");
+  ctx.fillStyle = colors.green;
+  ctx.font = "800 17px 'Inter', Arial, Helvetica, sans-serif";
+  ctx.fillText("COMUNICADO INTERNO", 390, 208);
+
+  const lineY = Math.max(238, 66 + logoHeight + 28);
+  ctx.strokeStyle = colors.border;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(margin, lineY);
+  ctx.lineTo(canvas.width - margin, lineY);
+  ctx.stroke();
+
+  const infoY = lineY + 34;
+  const cardW = 460;
+  const cardH = 116;
+  const cards = [
+    { label: "Loja", value: store, x: margin, accent: colors.green },
+    { label: "Data", value: formatShortDate(date), x: canvas.width - margin - cardW, accent: colors.ink },
+  ];
+
+  cards.forEach((card) => {
+    drawShadow(card.x, infoY, cardW, cardH, 8, 0.07);
+    fillRoundRect(card.x, infoY, cardW, cardH, 8, colors.white, colors.border, 1.5);
+    ctx.fillStyle = card.accent;
+    ctx.fillRect(card.x, infoY, 8, cardH);
+    ctx.fillStyle = colors.muted;
+    ctx.font = "800 20px 'Inter', Arial, Helvetica, sans-serif";
+    ctx.fillText(card.label.toUpperCase(), card.x + 34, infoY + 38);
+    const valueSize = fitText(card.value, cardW - 68, 42, 26, 900);
+    ctx.fillStyle = colors.ink;
+    ctx.font = `900 ${valueSize}px "Exo 2", Arial, Helvetica, sans-serif`;
+    ctx.fillText(card.value, card.x + 34, infoY + 88);
+  });
+
+  const noteY = infoY + cardH + 22;
+  const noteText = note || "Atendimento conforme escala";
+  fillRoundRect(margin, noteY, canvas.width - margin * 2, 58, 8, colors.white, colors.border, 1.2);
+  ctx.fillStyle = colors.orange;
+  ctx.fillRect(margin, noteY, 7, 58);
+  ctx.fillStyle = colors.graphite;
+  ctx.font = "700 23px 'Inter', Arial, Helvetica, sans-serif";
+  ctx.fillText(noteText, margin + 30, noteY + 38);
+
+  return noteY + 104;
+}
+
+function drawSectionTitle(groups, y) {
+  const totalNames = groups.reduce((sum, group) => sum + group.names.length, 0);
+  const margin = 64;
+
+  ctx.fillStyle = colors.ink;
+  ctx.font = "900 36px 'Exo 2', Arial, Helvetica, sans-serif";
+  ctx.fillText("Colaboradores por setor", margin, y);
+
+  const label = `${totalNames} ${totalNames === 1 ? "colaborador" : "colaboradores"}`;
+  const pillW = Math.max(238, ctx.measureText(label).width + 58);
+  fillRoundRect(canvas.width - margin - pillW, y - 38, pillW, 48, 24, colors.green);
+  ctx.fillStyle = colors.white;
+  ctx.font = "900 22px 'Inter', Arial, Helvetica, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText(label, canvas.width - margin - pillW / 2, y - 7);
+  ctx.textAlign = "left";
+
+  return y + 34;
+}
+
+function getNameColumns(count) {
+  if (count >= 18) return 3;
+  if (count >= 2) return 2;
+  return 1;
+}
+
+function measureSectorHeight(group) {
+  const columns = getNameColumns(group.names.length);
+  const rows = Math.ceil(group.names.length / columns);
+  return 86 + rows * 48 + 30;
+}
+
+function drawCheck(x, y) {
+  ctx.fillStyle = colors.lime;
+  ctx.beginPath();
+  ctx.arc(x, y, 11, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = colors.white;
+  ctx.lineWidth = 3;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.beginPath();
+  ctx.moveTo(x - 5, y);
+  ctx.lineTo(x - 1, y + 4);
+  ctx.lineTo(x + 7, y - 6);
+  ctx.stroke();
+}
+
+function drawSectorGroup(group, x, y, width) {
+  const columns = getNameColumns(group.names.length);
+  const columnGap = 18;
+  const rows = Math.ceil(group.names.length / columns);
+  const nameBoxW = (width - 48 - columnGap * (columns - 1)) / columns;
+  const height = measureSectorHeight(group);
+
+  drawShadow(x, y, width, height, 8, 0.055);
+  fillRoundRect(x, y, width, height, 8, colors.white, colors.border, 1.3);
+
+  ctx.fillStyle = colors.green;
+  ctx.fillRect(x, y, 8, height);
+
+  ctx.fillStyle = colors.ink;
+  const sectorSize = fitText(group.sector, width - 270, 31, 23, 900);
+  ctx.font = `900 ${sectorSize}px "Exo 2", Arial, Helvetica, sans-serif`;
+  ctx.fillText(group.sector, x + 28, y + 48);
+
+  const countLabel = `${group.names.length} ${group.names.length === 1 ? "pessoa" : "pessoas"}`;
+  ctx.fillStyle = "rgba(102, 141, 60, 0.12)";
+  const countW = Math.max(116, ctx.measureText(countLabel).width + 40);
+  fillRoundRect(x + width - countW - 24, y + 22, countW, 36, 18, "rgba(102, 141, 60, 0.12)");
+  ctx.fillStyle = colors.green;
+  ctx.font = "800 18px 'Inter', Arial, Helvetica, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText(countLabel, x + width - countW / 2 - 24, y + 46);
+  ctx.textAlign = "left";
+
+  const startY = y + 82;
+  group.names.forEach((name, index) => {
+    const col = columns === 1 ? 0 : index % columns;
+    const row = columns === 1 ? index : Math.floor(index / columns);
+    const itemX = x + 28 + col * (nameBoxW + columnGap);
+    const itemY = startY + row * 48;
+
+    fillRoundRect(itemX, itemY, nameBoxW, 38, 19, colors.pale, "#E6EFD9", 1);
+    drawCheck(itemX + 22, itemY + 19);
+
+    const nameSize = fitText(name, nameBoxW - 58, 24, 17, 800);
+    ctx.fillStyle = colors.ink;
+    ctx.font = `800 ${nameSize}px "Exo 2", Arial, Helvetica, sans-serif`;
+    ctx.fillText(name, itemX + 46, itemY + 27);
+  });
+
+  return height;
+}
+
+function drawEmptyState(y) {
+  const margin = 64;
+  drawShadow(margin, y, canvas.width - margin * 2, 170, 8, 0.05);
+  fillRoundRect(margin, y, canvas.width - margin * 2, 170, 8, colors.white, colors.border, 1.2);
+  ctx.fillStyle = colors.muted;
+  ctx.font = "800 30px 'Exo 2', Arial, Helvetica, sans-serif";
+  ctx.fillText("Preencha os nomes nos setores ao lado", margin + 36, y + 74);
+  ctx.font = "600 22px 'Inter', Arial, Helvetica, sans-serif";
+  ctx.fillText("Setores vazios não aparecem na arte final.", margin + 36, y + 112);
+  return 170;
+}
+
+function drawMainContent(groups, startY) {
+  const margin = 64;
+  let y = drawSectionTitle(groups, startY);
+
+  if (!groups.length) {
+    return y + drawEmptyState(y) + 24;
+  }
+
+  groups.forEach((group) => {
+    const height = drawSectorGroup(group, margin, y, canvas.width - margin * 2);
+    y += height + 20;
+  });
+
+  return y;
+}
+
+function drawFooter(y) {
+  const margin = 64;
+  const footerY = Math.max(y + 24, canvas.height - 142);
+
+  ctx.strokeStyle = colors.border;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(margin, footerY);
+  ctx.lineTo(canvas.width - margin, footerY);
+  ctx.stroke();
+
+  const logoHeight = drawLogo(margin, footerY + 26, 186);
+  ctx.fillStyle = colors.muted;
+  ctx.font = "700 20px 'Inter', Arial, Helvetica, sans-serif";
+  ctx.fillText("Arte gerada automaticamente para manter o padrão visual", 300, footerY + 60);
+  ctx.fillStyle = colors.ink;
+  ctx.font = "900 25px 'Exo 2', Arial, Helvetica, sans-serif";
+  ctx.fillText("Escala de sábado", 300, footerY + 30);
+
+  return footerY + Math.max(logoHeight + 36, 112);
+}
+
+function measureContentHeight(groups) {
+  let height = 508;
+  height += 68;
+
+  if (!groups.length) {
+    height += 170 + 24;
+  } else {
+    groups.forEach((group) => {
+      height += measureSectorHeight(group) + 20;
+    });
+  }
+
+  return Math.max(1350, height + 170);
+}
+
+function render() {
+  const groups = getSectorGroups();
+  const note = form.note.value.trim();
+  canvas.height = measureContentHeight(groups);
+
+  drawBackground();
+  const contentStartY = drawHeader(getStore(), form.shiftDate.value, note);
+  const contentEndY = drawMainContent(groups, contentStartY);
+  drawFooter(contentEndY);
 }
 
 function downloadImage() {
