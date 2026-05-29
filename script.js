@@ -52,28 +52,38 @@ function formatShortDate(value) {
   }).format(new Date(year, month - 1, day));
 }
 
-function formatFullDate(value) {
-  if (!value) return "";
-  const [year, month, day] = value.split("-").map(Number);
-  return new Intl.DateTimeFormat("pt-BR", {
-    weekday: "long",
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  }).format(new Date(year, month - 1, day));
-}
-
 function getStore() {
   if (form.store.value === "Outro") {
-    return form.customStore.value.trim() || "Loja";
+    return toUppercaseText(form.customStore.value.trim() || "Loja");
   }
-  return form.store.value;
+  return toUppercaseText(form.store.value);
+}
+
+function toUppercaseText(value) {
+  return value.toLocaleUpperCase("pt-BR");
+}
+
+function normalizeUppercaseElement(element) {
+  if (!element || element.type === "date" || element.tagName === "SELECT") return;
+
+  const previousValue = element.value;
+  const nextValue = toUppercaseText(previousValue);
+  if (previousValue === nextValue) return;
+
+  const selectionStart = element.selectionStart;
+  const selectionEnd = element.selectionEnd;
+
+  element.value = nextValue;
+
+  if (selectionStart !== null && selectionEnd !== null) {
+    element.setSelectionRange(selectionStart, selectionEnd);
+  }
 }
 
 function cleanNames(value) {
   return value
     .split(/\n|,/)
-    .map((name) => name.trim())
+    .map((name) => toUppercaseText(name.trim()))
     .filter(Boolean);
 }
 
@@ -82,8 +92,9 @@ function getSectorGroups() {
     .map((input) => {
       const baseName = input.dataset.sector;
       const sector = baseName === "Outro" ? form.customDepartment.value.trim() || "Outros" : baseName;
+
       return {
-        sector,
+        sector: toUppercaseText(sector),
         names: cleanNames(input.value),
       };
     })
@@ -108,6 +119,7 @@ function fillRoundRect(x, y, width, height, radius, fill, stroke = null, lineWid
   drawRoundRect(x, y, width, height, radius);
   ctx.fillStyle = fill;
   ctx.fill();
+
   if (stroke) {
     ctx.strokeStyle = stroke;
     ctx.lineWidth = lineWidth;
@@ -126,32 +138,14 @@ function drawShadow(x, y, width, height, radius, alpha = 0.08) {
 
 function fitText(text, maxWidth, startSize, minSize, weight = 800, family = "Exo 2") {
   let size = startSize;
+
   do {
     ctx.font = `${weight} ${size}px "${family}", Arial, Helvetica, sans-serif`;
     if (ctx.measureText(text).width <= maxWidth) return size;
     size -= 1;
   } while (size >= minSize);
+
   return minSize;
-}
-
-function wrapText(text, maxWidth, font) {
-  ctx.font = font;
-  const words = text.split(" ");
-  const lines = [];
-  let line = "";
-
-  words.forEach((word) => {
-    const test = line ? `${line} ${word}` : word;
-    if (ctx.measureText(test).width <= maxWidth) {
-      line = test;
-    } else {
-      if (line) lines.push(line);
-      line = word;
-    }
-  });
-
-  if (line) lines.push(line);
-  return lines;
 }
 
 function slug(value) {
@@ -182,17 +176,21 @@ function drawBackground() {
 
   ctx.globalAlpha = 0.06;
   ctx.fillStyle = colors.green;
+
   ctx.beginPath();
   ctx.ellipse(1010, 186, 150, 250, 0.5, 0, Math.PI * 2);
   ctx.fill();
+
   ctx.beginPath();
   ctx.ellipse(40, canvas.height - 130, 160, 240, -0.5, 0, Math.PI * 2);
   ctx.fill();
+
   ctx.globalAlpha = 1;
 }
 
 function drawLogo(x, y, width) {
   if (!brandLogo.complete || !brandLogo.naturalWidth) return 0;
+
   const height = width * (brandLogo.naturalHeight / brandLogo.naturalWidth);
   ctx.drawImage(brandLogo, x, y, width, height);
   return height;
@@ -235,11 +233,14 @@ function drawHeader(store, date, note) {
   cards.forEach((card) => {
     drawShadow(card.x, infoY, cardW, cardH, 8, 0.07);
     fillRoundRect(card.x, infoY, cardW, cardH, 8, colors.white, colors.border, 1.5);
+
     ctx.fillStyle = card.accent;
     ctx.fillRect(card.x, infoY, 8, cardH);
+
     ctx.fillStyle = colors.muted;
     ctx.font = "800 20px 'Inter', Arial, Helvetica, sans-serif";
     ctx.fillText(card.label.toUpperCase(), card.x + 34, infoY + 38);
+
     const valueSize = fitText(card.value, cardW - 68, 42, 26, 900);
     ctx.fillStyle = colors.ink;
     ctx.font = `900 ${valueSize}px "Exo 2", Arial, Helvetica, sans-serif`;
@@ -247,10 +248,13 @@ function drawHeader(store, date, note) {
   });
 
   const noteY = infoY + cardH + 22;
-  const noteText = note || "Atendimento conforme escala";
+  const noteText = note || "ATENDIMENTO CONFORME ESCALA";
+
   fillRoundRect(margin, noteY, canvas.width - margin * 2, 58, 8, colors.white, colors.border, 1.2);
+
   ctx.fillStyle = colors.orange;
   ctx.fillRect(margin, noteY, 7, 58);
+
   ctx.fillStyle = colors.graphite;
   ctx.font = "700 23px 'Inter', Arial, Helvetica, sans-serif";
   ctx.fillText(noteText, margin + 30, noteY + 38);
@@ -268,7 +272,9 @@ function drawSectionTitle(groups, y) {
 
   const label = `${totalNames} ${totalNames === 1 ? "colaborador" : "colaboradores"}`;
   const pillW = Math.max(238, ctx.measureText(label).width + 58);
+
   fillRoundRect(canvas.width - margin - pillW, y - 38, pillW, 48, 24, colors.green);
+
   ctx.fillStyle = colors.white;
   ctx.font = "900 22px 'Inter', Arial, Helvetica, sans-serif";
   ctx.textAlign = "center";
@@ -300,6 +306,7 @@ function drawCheck(x, y) {
   ctx.lineWidth = 3;
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
+
   ctx.beginPath();
   ctx.moveTo(x - 5, y);
   ctx.lineTo(x - 1, y + 4);
@@ -326,9 +333,10 @@ function drawSectorGroup(group, x, y, width) {
   ctx.fillText(group.sector, x + 28, y + 48);
 
   const countLabel = `${group.names.length} ${group.names.length === 1 ? "pessoa" : "pessoas"}`;
-  ctx.fillStyle = "rgba(102, 141, 60, 0.12)";
   const countW = Math.max(116, ctx.measureText(countLabel).width + 40);
+
   fillRoundRect(x + width - countW - 24, y + 22, countW, 36, 18, "rgba(102, 141, 60, 0.12)");
+
   ctx.fillStyle = colors.green;
   ctx.font = "800 18px 'Inter', Arial, Helvetica, sans-serif";
   ctx.textAlign = "center";
@@ -336,6 +344,7 @@ function drawSectorGroup(group, x, y, width) {
   ctx.textAlign = "left";
 
   const startY = y + 82;
+
   group.names.forEach((name, index) => {
     const col = columns === 1 ? 0 : index % columns;
     const row = columns === 1 ? index : Math.floor(index / columns);
@@ -356,13 +365,17 @@ function drawSectorGroup(group, x, y, width) {
 
 function drawEmptyState(y) {
   const margin = 64;
+
   drawShadow(margin, y, canvas.width - margin * 2, 170, 8, 0.05);
   fillRoundRect(margin, y, canvas.width - margin * 2, 170, 8, colors.white, colors.border, 1.2);
+
   ctx.fillStyle = colors.muted;
   ctx.font = "800 30px 'Exo 2', Arial, Helvetica, sans-serif";
   ctx.fillText("Preencha os nomes nos setores ao lado", margin + 36, y + 74);
+
   ctx.font = "600 22px 'Inter', Arial, Helvetica, sans-serif";
   ctx.fillText("Setores vazios não aparecem na arte final.", margin + 36, y + 112);
+
   return 170;
 }
 
@@ -394,9 +407,11 @@ function drawFooter(y) {
   ctx.stroke();
 
   const logoHeight = drawLogo(margin, footerY + 26, 186);
+
   ctx.fillStyle = colors.muted;
   ctx.font = "700 20px 'Inter', Arial, Helvetica, sans-serif";
   ctx.fillText("Arte gerada automaticamente para manter o padrão visual", 300, footerY + 60);
+
   ctx.fillStyle = colors.ink;
   ctx.font = "900 25px 'Exo 2', Arial, Helvetica, sans-serif";
   ctx.fillText("Escala de sábado", 300, footerY + 30);
@@ -421,17 +436,21 @@ function measureContentHeight(groups) {
 
 function render() {
   const groups = getSectorGroups();
-  const note = form.note.value.trim();
+  const note = toUppercaseText(form.note.value.trim());
+
   canvas.height = measureContentHeight(groups);
 
   drawBackground();
+
   const contentStartY = drawHeader(getStore(), form.shiftDate.value, note);
   const contentEndY = drawMainContent(groups, contentStartY);
+
   drawFooter(contentEndY);
 }
 
 function downloadImage() {
   const groups = getSectorGroups();
+
   if (!groups.length) {
     form.sectorInputs[0].focus();
     return;
@@ -440,6 +459,7 @@ function downloadImage() {
   const store = slug(getStore());
   const date = form.shiftDate.value || "sabado";
   const link = document.createElement("a");
+
   link.download = `plantao-sabado-${store}-${date}.png`;
   link.href = canvas.toDataURL("image/png");
   link.click();
@@ -449,17 +469,20 @@ function clearForm() {
   form.sectorInputs.forEach((input) => {
     input.value = "";
   });
+
   form.customDepartment.value = "";
   form.store.value = "Limoeiro";
   form.customStore.value = "";
-  form.note.value = "Atendimento conforme escala";
+  form.note.value = "ATENDIMENTO CONFORME ESCALA";
   form.shiftDate.value = toInputDate(nextSaturday());
   form.customStoreWrap.classList.add("hidden");
+
   render();
   form.sectorInputs[0].focus();
 }
 
 form.shiftDate.value = toInputDate(nextSaturday());
+form.note.value = toUppercaseText(form.note.value);
 
 [
   ...form.sectorInputs,
@@ -469,8 +492,15 @@ form.shiftDate.value = toInputDate(nextSaturday());
   form.shiftDate,
   form.note,
 ].forEach((element) => {
-  element.addEventListener("input", render);
-  element.addEventListener("change", render);
+  element.addEventListener("input", () => {
+    normalizeUppercaseElement(element);
+    render();
+  });
+
+  element.addEventListener("change", () => {
+    normalizeUppercaseElement(element);
+    render();
+  });
 });
 
 form.store.addEventListener("change", () => {
@@ -482,7 +512,9 @@ form.downloadBtn.addEventListener("click", downloadImage);
 form.clearBtn.addEventListener("click", clearForm);
 
 brandLogo.addEventListener("load", render);
+
 if (document.fonts) {
   document.fonts.ready.then(render);
 }
+
 render();
